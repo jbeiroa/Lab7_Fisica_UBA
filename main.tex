@@ -1,0 +1,106 @@
+\documentclass[12pt, a4paper, twoside]{report}
+% encodings and language
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish, es-noquoting, es-tabla]{babel}
+%graphics and colors
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{color}
+\graphicspath{ {figures/} }
+%math symbols and fonts
+\usepackage{amsmath, amssymb, amsfonts}
+% miscellaneous
+\usepackage{authblk}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[bottom]{footmisc}
+
+% code coloring
+\usepackage[procnames]{listings}
+\definecolor{keywords}{RGB}{255,0,90}
+\definecolor{comments}{RGB}{0,0,113}
+\definecolor{red}{RGB}{160,0,0}
+\definecolor{green}{RGB}{0,150,0}
+\lstset{
+		language=Python, 
+        basicstyle=\ttfamily\small, 
+        keywordstyle=\color{keywords},
+        commentstyle=\color{comments},
+        stringstyle=\color{red},
+        showstringspaces=false,
+        identifierstyle=\color{green},
+        procnamekeys={def,class},
+    	frame=single,
+    	breaklines=true,
+    	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
+}
+
+% page geometry
+\usepackage[a4paper,width=170mm,top=25mm,bottom=25mm,bindingoffset=6mm]{geometry}
+\setlength{\headheight}{15pt}
+\linespread{1.5}
+\raggedbottom
+
+%fancy headers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\newcommand\doubleRule{\toprule\toprule}
+\newcommand\doublerule{\toprule\specialrule{\heavyrulewidth}{\doublerulesep}{0.95em}}
+
+\fancyhead{}
+%\fancyhead[RO,LE]{\leftmark}
+\fancyhead[LO,RE]{\rightmark}
+\fancyfoot{}
+\fancyfoot[CE,CO]{\thepage}
+
+% bibliography
+\usepackage{biblatex}
+\bibliography{chapters/referencias}
+
+
+\begin{document}
+\input{caratula.tex}
+\pagenumbering{roman}
+\chapter*{Motivaciones y objetivos}
+En todos los peces óseos, existe un circuito neuronal que controla una respuesta de escape o sobresalto. En forma muy simplificada, este circuito, consta de tres elementos: aferencias (entradas) sensoriales que colectan información del medio; una interneurona, la célula Mauthner, que funciona como elemento integrador de las entradas sensoriales y que gatilla (mediante el disparo de un potencial de acción) la contracción masiva de la musculatura que permite la respuesta de escape; mediada por neuronas motoras. Este reflejo de escape puede ser causado por distintos estímulos sensoriales, siendo los acústicos y visuales los más estudiados. En el caso de peces de descarga eléctrica débil como \emph{Gymnotus omarorum}, también modula la descarga del órgano eléctrico (DOE).
+
+Los peces de descarga eléctrica débil emiten en forma constante un campo eléctrico pulsado que sufre deformaciones al atravesar un medio de conductancia heterogénea. Los animales son capaces de detectar su propio campo eléctrico y por lo tanto utilizan esas descargas como parte de un sistema electrosensorial que les permite formar una ``imagen eléctrica'' de su entorno. El experimento típico para evaluar la respuesta de escape o sobresalto consiste en utilizar algún estímulo acústico o visual que sobresalte al animal y gatille su respuesta mientras se filma el comportamiento del pez y se registra la DOE. Sin embargo, este experimento aún no se ha realizado en peces eléctricos.
+
+En la mayoría de los casos estudiados en peces donde hay una respuesta motora clara, ésta es direccional y propulsa al animal en dirección contraria a la del estímulo. En los peces eléctricos la respuesta de escape o novedad frente a estímulos sonoros no ha sido estudiada y no se ha determinado si hay correlatos entre la modulación de la DOE y respuestas motoras (de escape).
+
+En los experimentos comportamentales es de suma importancia la caracterización física de los estímulos y los dispositivos experimentales utilizados. La primera permite conocer a qué responde el animal y la segunda recrear condiciones controlables y repetitivas que asemejen a aquellas encontradas en los habitats naturales. Desde el punto de vista biológico existe otra razón para la caracterización física, y es que los animales \emph{integran distintas aferencias sensoriales} y en ocasiones es difícil realizar excitaciones que no sean multimodales. En el caso de peces eléctricos, por ejemplo, una estimulación acústica con un parlante sumergido en la pecera conlleva también la posible estimulación causada por la corriente enviada al parlante (y su consiguiente campo magnético). De esta manera, lo que a simple vista es sólo un estímulo sonoro son en realidad tres: el campo acústico de presiones, el campo de velocidades debido a la onda acústica y los campos electromagnéticos del parlante.
+
+En el caso de los estímulos acústicos las propiedades del acuario dificultan el control del experimento. Por un lado, la diferencia de velocidades de propagación entre el agua y el aire hace que todas las interfaces se comporten como espejos acústicos casi ideales, con lo cual una sola fuente de sonido dentro del acuario podría generar suficientes fuentes imágenes para que el sonido parezca provenir de todas las direcciones posibles. 
+
+Como paso previo a futuros estudios de integración multimodal, se ha realizado una caracterización acústica de una pecera para estudios comportamentales. Los objetivos principales del proyecto contemplaban la caracterización a partir mediciones de la respuesta impulso del acuario, el armado del setup experimental para los estudios comportamentales y la posible implementación de un sistema de control activo de ecos. De estos tres, sólo los primeros dos pudieron llevarse a cabo completamente.
+
+\chapter*{Resumen}
+
+Se construyó y caracterizó acústicamente una pecera para realizar estudios comportamentales en peces. El objetivo de dicha caracterización fué determinar la direccionalidad de los campos de presión que se establecen en el acuario al emitir sonidos con un parlante, siendo de particular interés averigüar si hay excitación de modos normales. Esto último se logró mediante grabaciones y procesamientos acordes de señales de prueba que permiten obtener la respuesta impulso de la pecera. Se observaron modos en casi todo el rango de frecuencias estudiadas.
+
+Las mediciones realizadas fueron comparadas con modelos computacionales que incluyen ciertas aproximaciones en las condiciones de borde de la pecera. De los modos encontrados, los de frecuencias mayores a 6kHz corresponden a la pecera comportándose como una guía de ondas, mientras que los de frecuencias más bajas se deben a la interacción del agua con los vidrios y el aire en la superficie libre. Estos últimos aparecen en frecuencias de relevancia biológica y presentan campos uniformes y de direccionalidad clara sólo en una mitad de la pecera, la cual se utilizó para los estudios comportamentales.
+
+La demarcación de la zona experimental se realizó utilizando goma de neoprene, la cual baja la intensidad de todos los modos encontrados y absorve completametamente los de altas frecuencias.
+
+Los estudios compotamentales se hicieron en peces eléctricos se hicieron mediante un programa de adquisición y control desarrollado en el laboratorio. Los resultados muestran que el animal responde ante el estímulo aumentando la frecuencia de la DOE, aunque no siempre hay una respuesta motora.
+
+
+\tableofcontents
+
+\pagenumbering{arabic}
+
+\input{chapters/introduccion.tex}
+\input{chapters/experimental.tex}
+\input{chapters/resultados.tex}
+\input{chapters/conclusiones.tex}
+\input{chapters/bibliografia.tex}
+\appendix
+\input{chapters/apendicepython}
+\input{chapters/extractIR}
+
+\end{document}

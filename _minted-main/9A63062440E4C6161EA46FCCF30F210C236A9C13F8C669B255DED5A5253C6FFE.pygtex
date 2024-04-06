@@ -1,0 +1,213 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+ch}{\PYGZsh{}!/usr/bin/env python3}
+\PYG{c+c1}{\PYGZsh{} \PYGZhy{}*\PYGZhy{} coding: utf\PYGZhy{}8 \PYGZhy{}*\PYGZhy{}}
+
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Plot the live microphone signal(s) with matplotlib.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{k+kn}{import} \PYG{n+nn}{argparse}
+\PYG{k+kn}{from} \PYG{n+nn}{queue} \PYG{k+kn}{import} \PYG{n}{Queue}\PYG{p}{,} \PYG{n}{Empty}
+\PYG{k+kn}{from} \PYG{n+nn}{os} \PYG{k+kn}{import} \PYG{n}{path}
+
+
+\PYG{n}{user} \PYG{o}{=} \PYG{n}{path}\PYG{o}{.}\PYG{n}{expanduser}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZti{}\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{main\PYGZus{}path} \PYG{o}{=} \PYG{n}{path}\PYG{o}{.}\PYG{n}{join}\PYG{p}{(}\PYG{n}{user}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}Documents\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}recordings\PYGZsq{}}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{int\PYGZus{}or\PYGZus{}str}\PYG{p}{(}\PYG{n}{text}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Helper function for argument parsing.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{try}\PYG{p}{:}
+        \PYG{k}{return} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{text}\PYG{p}{)}
+    \PYG{k}{except} \PYG{n+ne}{ValueError}\PYG{p}{:}
+        \PYG{k}{return} \PYG{n}{text}
+
+
+\PYG{n}{parser} \PYG{o}{=} \PYG{n}{argparse}\PYG{o}{.}\PYG{n}{ArgumentParser}\PYG{p}{(}\PYG{n}{description}\PYG{o}{=}\PYG{n}{\PYGZus{}\PYGZus{}doc\PYGZus{}\PYGZus{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}l\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}list\PYGZhy{}devices\PYGZsq{}}\PYG{p}{,} \PYG{n}{action}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}store\PYGZus{}true\PYGZsq{}}\PYG{p}{,}
+    \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}show list of audio devices and exit\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}d\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}device\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n}{int\PYGZus{}or\PYGZus{}str}\PYG{p}{,}
+    \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}input device (numeric ID or substring)\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}w\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}window\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{float}\PYG{p}{,} \PYG{n}{default}\PYG{o}{=}\PYG{l+m+mi}{200}\PYG{p}{,} \PYG{n}{metavar}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}DURATION\PYGZsq{}}\PYG{p}{,}
+    \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}visible time slot (default: }\PYG{l+s+si}{\PYGZpc{}(default)s}\PYG{l+s+s1}{ ms)\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}i\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}interval\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{float}\PYG{p}{,} \PYG{n}{default}\PYG{o}{=}\PYG{l+m+mi}{100}\PYG{p}{,}
+    \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}minimum time between plot updates (default: }\PYG{l+s+si}{\PYGZpc{}(default)s}\PYG{l+s+s1}{ ms)\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}b\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}blocksize\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}block size (in samples)\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}r\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}samplerate\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{float}\PYG{p}{,} \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}sampling rate of audio device\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}n\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}downsample\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{default}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{metavar}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}N\PYGZsq{}}\PYG{p}{,}
+    \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}display every Nth sample (default: }\PYG{l+s+si}{\PYGZpc{}(default)s}\PYG{l+s+s1}{)\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}
+    \PYG{l+s+s1}{\PYGZsq{}channels\PYGZsq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{default}\PYG{o}{=}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{n}{nargs}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}*\PYGZsq{}}\PYG{p}{,} \PYG{n}{metavar}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}CHANNEL\PYGZsq{}}\PYG{p}{,}
+    \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}input channels to plot (default: the first)\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{args} \PYG{o}{=} \PYG{n}{parser}\PYG{o}{.}\PYG{n}{parse\PYGZus{}args}\PYG{p}{()}
+\PYG{k}{if} \PYG{n+nb}{any}\PYG{p}{(}\PYG{n}{c} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{1} \PYG{k}{for} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n}{args}\PYG{o}{.}\PYG{n}{channels}\PYG{p}{):}
+    \PYG{n}{parser}\PYG{o}{.}\PYG{n}{error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}argument CHANNEL: must be \PYGZgt{}= 1\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{mapping} \PYG{o}{=} \PYG{p}{[}\PYG{n}{c} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1} \PYG{k}{for} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n}{args}\PYG{o}{.}\PYG{n}{channels}\PYG{p}{]}  \PYG{c+c1}{\PYGZsh{} Channel numbers start with 1}
+\PYG{n}{queue} \PYG{o}{=} \PYG{n}{Queue}\PYG{p}{()}
+
+
+\PYG{k}{def} \PYG{n+nf}{audio\PYGZus{}callback}\PYG{p}{(}\PYG{n}{indata}\PYG{p}{,} \PYG{n}{frames}\PYG{p}{,} \PYG{n}{time}\PYG{p}{,} \PYG{n}{status}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}This is called (from a separate thread) for each audio block.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{if} \PYG{n}{status}\PYG{p}{:}
+        \PYG{k}{print}\PYG{p}{(}\PYG{n}{status}\PYG{p}{,} \PYG{n}{flush}\PYG{o}{=}\PYG{n+nb+bp}{True}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} Fancy indexing with mapping creates a (necessary!) copy:}
+    \PYG{n}{queue}\PYG{o}{.}\PYG{n}{put}\PYG{p}{(}\PYG{n}{indata}\PYG{p}{[::}\PYG{n}{args}\PYG{o}{.}\PYG{n}{downsample}\PYG{p}{,} \PYG{n}{mapping}\PYG{p}{])}
+
+
+\PYG{k}{def} \PYG{n+nf}{update\PYGZus{}plot}\PYG{p}{(}\PYG{n}{frame}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}This is called by matplotlib for each plot update.}
+
+\PYG{l+s+sd}{    Typically, audio callbacks happen more frequently than plot updates,}
+\PYG{l+s+sd}{    therefore the queue tends to contain multiple blocks of audio data.}
+
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{global} \PYG{n}{plotdata}
+    \PYG{k}{global} \PYG{n}{pause}
+    \PYG{k}{global} \PYG{n}{record}
+    \PYG{k}{global} \PYG{n}{recorded}
+    \PYG{n}{block} \PYG{o}{=} \PYG{n+nb+bp}{True}  \PYG{c+c1}{\PYGZsh{} The first read from the queue is blocking ...}
+    \PYG{k}{if} \PYG{o+ow}{not} \PYG{n}{pause}\PYG{p}{:}
+        \PYG{k}{while} \PYG{n+nb+bp}{True}\PYG{p}{:}
+            \PYG{k}{try}\PYG{p}{:}
+                \PYG{n}{data} \PYG{o}{=} \PYG{n}{queue}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{n}{block}\PYG{o}{=}\PYG{n}{block}\PYG{p}{)}
+                \PYG{k}{if} \PYG{n}{record}\PYG{p}{:}
+                    \PYG{n}{recorded}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{k}{pass}
+            \PYG{k}{except} \PYG{n}{Empty}\PYG{p}{:}
+                \PYG{k}{break}
+            \PYG{n}{shift} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+            \PYG{n}{plotdata} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{roll}\PYG{p}{(}\PYG{n}{plotdata}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{n}{shift}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)}
+            \PYG{n}{plotdata}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{shift}\PYG{p}{:,} \PYG{p}{:]} \PYG{o}{=} \PYG{n}{data}
+            \PYG{n}{block} \PYG{o}{=} \PYG{n+nb+bp}{False}  \PYG{c+c1}{\PYGZsh{} ... all further reads are non\PYGZhy{}blocking}
+            \PYG{k}{if} \PYG{n}{gen}\PYG{o}{.}\PYG{n}{is\PYGZus{}playing}\PYG{p}{()} \PYG{o}{==} \PYG{n+nb+bp}{False}\PYG{p}{:}
+                \PYG{k}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}led off\PYGZsq{}}\PYG{p}{)}    \PYG{c+c1}{\PYGZsh{} debug}
+                \PYG{c+c1}{\PYGZsh{} duino.led\PYGZus{}off()}
+        \PYG{k}{for} \PYG{n}{column}\PYG{p}{,} \PYG{n}{line} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{lines}\PYG{p}{):}
+            \PYG{n}{line}\PYG{o}{.}\PYG{n}{set\PYGZus{}ydata}\PYG{p}{(}\PYG{n}{plotdata}\PYG{p}{[:,} \PYG{n}{column}\PYG{p}{])}
+    \PYG{k}{return} \PYG{n}{lines}
+
+
+\PYG{k}{def} \PYG{n+nf}{onKeyboard}\PYG{p}{(}\PYG{n}{event}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Keyboard events for experiment control.}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{global} \PYG{n}{pause}
+    \PYG{k}{global} \PYG{n}{record}
+    \PYG{k}{global} \PYG{n}{recorded}
+    \PYG{k}{global} \PYG{n}{file\PYGZus{}}
+    \PYG{k}{global} \PYG{n}{frec}
+    \PYG{k}{global} \PYG{n}{amp}
+    \PYG{k}{global} \PYG{n}{dur}
+    \PYG{k}{global} \PYG{n}{soundfile}
+    \PYG{n}{k} \PYG{o}{=} \PYG{n}{event}\PYG{o}{.}\PYG{n}{key}
+    \PYG{k}{if} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}t\PYGZsq{}}\PYG{p}{:}    \PYG{c+c1}{\PYGZsh{} play tone and record}
+        \PYG{n}{record} \PYG{o}{=} \PYG{n+nb+bp}{True}
+        \PYG{c+c1}{\PYGZsh{} duino.led\PYGZus{}on()}
+        \PYG{n}{gen}\PYG{o}{.}\PYG{n}{play\PYGZus{}tone}\PYG{p}{(}\PYG{n}{frec}\PYG{p}{,} \PYG{n}{dur}\PYG{p}{,} \PYG{n}{amp}\PYG{p}{)}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}r\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} play from file and record}
+        \PYG{n}{record} \PYG{o}{=} \PYG{n+nb+bp}{True}
+        \PYG{c+c1}{\PYGZsh{} duino.led\PYGZus{}on()}
+        \PYG{n}{gen}\PYG{o}{.}\PYG{n}{play\PYGZus{}file}\PYG{p}{(}\PYG{n}{soundfile}\PYG{p}{)}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}v\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} record without playing tone}
+        \PYG{n}{record} \PYG{o}{=} \PYG{n+nb+bp}{True}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}g\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} save recording}
+        \PYG{k}{if} \PYG{n}{record} \PYG{o}{==} \PYG{n+nb+bp}{True}\PYG{p}{:}
+            \PYG{n}{record} \PYG{o}{=} \PYG{n+nb+bp}{False}
+            \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n+nb}{file}\PYG{o}{.}\PYG{n}{name}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}w\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{thefile}\PYG{p}{:}
+                \PYG{k}{for} \PYG{n}{item} \PYG{o+ow}{in} \PYG{n}{recorded}\PYG{p}{:}
+                    \PYG{n}{thefile}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZpc{}s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n}{item}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:} \PYG{k}{pass}
+        \PYG{n}{recorded} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}n\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} choose/create save file}
+        \PYG{n}{root} \PYG{o}{=} \PYG{n}{tk}\PYG{o}{.}\PYG{n}{Tk}\PYG{p}{()}
+        \PYG{n}{root}\PYG{o}{.}\PYG{n}{withdraw}\PYG{p}{()}
+        \PYG{n}{file\PYGZus{}} \PYG{o}{=} \PYG{n}{filedialog}\PYG{o}{.}\PYG{n}{asksaveasfile}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}w\PYGZsq{}}\PYG{p}{,} \PYG{n}{defaultextension}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}txt\PYGZsq{}}\PYG{p}{)}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}p\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} choose parameter for tones}
+        \PYG{n}{root} \PYG{o}{=} \PYG{n}{tk}\PYG{o}{.}\PYG{n}{Tk}\PYG{p}{()}
+        \PYG{n}{root}\PYG{o}{.}\PYG{n}{withdraw}\PYG{p}{()}
+        \PYG{n}{frec} \PYG{o}{=} \PYG{n}{simpledialog}\PYG{o}{.}\PYG{n}{askfloat}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Frecuencia\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}Frecuencia (Hz):\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{dur} \PYG{o}{=} \PYG{n}{simpledialog}\PYG{o}{.}\PYG{n}{askfloat}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}dur\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}Duración (ms):\PYGZsq{}}\PYG{p}{)} \PYG{o}{*} \PYG{o}{.}\PYG{l+m+mo}{001}
+        \PYG{n}{amp} \PYG{o}{=} \PYG{n}{simpledialog}\PYG{o}{.}\PYG{n}{askfloat}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Amplitud\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}Volumen (0\PYGZhy{}\PYGZhy{}1):\PYGZsq{}}\PYG{p}{)}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}m\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} choose sound file}
+        \PYG{n}{root} \PYG{o}{=} \PYG{n}{tk}\PYG{o}{.}\PYG{n}{Tk}\PYG{p}{()}
+        \PYG{n}{root}\PYG{o}{.}\PYG{n}{withdraw}\PYG{p}{()}
+        \PYG{n}{s} \PYG{o}{=} \PYG{n}{filedialog}\PYG{o}{.}\PYG{n}{askopenfile}\PYG{p}{()}
+        \PYG{n}{soundfile} \PYG{o}{=} \PYG{n}{s}\PYG{o}{.}\PYG{n}{name}
+    \PYG{k}{elif} \PYG{n}{k} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}q\PYGZsq{}}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} play tone}
+        \PYG{n}{gen}\PYG{o}{.}\PYG{n}{play\PYGZus{}tone}\PYG{p}{(}\PYG{n}{frec}\PYG{p}{,} \PYG{n}{dur}\PYG{p}{,} \PYG{n}{amp}\PYG{p}{)}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{k}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Argument unknown\PYGZsq{}}\PYG{p}{)}
+
+
+\PYG{k}{try}\PYG{p}{:}
+    \PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k+kn}{as} \PYG{n+nn}{plt}
+    \PYG{k+kn}{from} \PYG{n+nn}{matplotlib.animation} \PYG{k+kn}{import} \PYG{n}{FuncAnimation}
+    \PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k+kn}{as} \PYG{n+nn}{np}
+    \PYG{k+kn}{import} \PYG{n+nn}{sounddevice} \PYG{k+kn}{as} \PYG{n+nn}{sd}
+    \PYG{k+kn}{import} \PYG{n+nn}{tkinter} \PYG{k+kn}{as} \PYG{n+nn}{tk}
+    \PYG{k+kn}{from} \PYG{n+nn}{tkinter} \PYG{k+kn}{import} \PYG{n}{filedialog}\PYG{p}{,} \PYG{n}{simpledialog}
+    \PYG{k+kn}{from} \PYG{n+nn}{ToneGenerator} \PYG{k+kn}{import} \PYG{n}{ToneGenerator}
+    \PYG{c+c1}{\PYGZsh{} from arduino import Arduino}
+
+
+    \PYG{n}{options} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}\PYGZsq{}t \PYGZhy{}\PYGZhy{}\PYGZgt{} Record and play tone.}\PYG{l+s+se}{\PYGZbs{}n}
+\PYG{l+s+s1}{                 r \PYGZhy{}\PYGZhy{}\PYGZgt{} Record and play from file.}\PYG{l+s+se}{\PYGZbs{}n}
+\PYG{l+s+s1}{                 v \PYGZhy{}\PYGZhy{}\PYGZgt{} Record silence.}\PYG{l+s+se}{\PYGZbs{}n}
+\PYG{l+s+s1}{                 g \PYGZhy{}\PYGZhy{}\PYGZgt{} Save recorded data}
+\PYG{l+s+s1}{                 n \PYGZhy{}\PYGZhy{}\PYGZgt{} Choose new file to save data.}\PYG{l+s+se}{\PYGZbs{}n}
+\PYG{l+s+s1}{                 p \PYGZhy{}\PYGZhy{}\PYGZgt{} Choose tone parameters (freq, dur, amp).}\PYG{l+s+se}{\PYGZbs{}n}
+\PYG{l+s+s1}{                 m \PYGZhy{}\PYGZhy{}\PYGZgt{} Choose file to play.}\PYG{l+s+se}{\PYGZbs{}n}
+\PYG{l+s+s1}{                 q \PYGZhy{}\PYGZhy{}\PYGZgt{} Play test tone.\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+
+    \PYG{n}{pause} \PYG{o}{=} \PYG{n+nb+bp}{False}
+    \PYG{n}{record} \PYG{o}{=} \PYG{n+nb+bp}{False}
+    \PYG{n}{recorded} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{file\PYGZus{}} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{frec} \PYG{o}{=} \PYG{l+m+mi}{440}
+    \PYG{n}{dur} \PYG{o}{=} \PYG{o}{.}\PYG{l+m+mo}{025}
+    \PYG{n}{amp} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{soundfile} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}sw1.wav\PYGZsq{}}
+    \PYG{n}{gen} \PYG{o}{=} \PYG{n}{ToneGenerator}\PYG{p}{()}
+    \PYG{c+c1}{\PYGZsh{} duino = Arduino()}
+    \PYG{n}{nchan} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{args}\PYG{o}{.}\PYG{n}{channels}\PYG{p}{)}
+
+    \PYG{k}{if} \PYG{n}{args}\PYG{o}{.}\PYG{n}{list\PYGZus{}devices}\PYG{p}{:}
+        \PYG{k}{print}\PYG{p}{(}\PYG{n}{sd}\PYG{o}{.}\PYG{n}{query\PYGZus{}devices}\PYG{p}{())}
+        \PYG{n}{parser}\PYG{o}{.}\PYG{n}{exit}\PYG{p}{()}
+    \PYG{k}{if} \PYG{n}{args}\PYG{o}{.}\PYG{n}{samplerate} \PYG{o+ow}{is} \PYG{n+nb+bp}{None}\PYG{p}{:}
+        \PYG{n}{device\PYGZus{}info} \PYG{o}{=} \PYG{n}{sd}\PYG{o}{.}\PYG{n}{query\PYGZus{}devices}\PYG{p}{(}\PYG{n}{args}\PYG{o}{.}\PYG{n}{device}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}input\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{args}\PYG{o}{.}\PYG{n}{samplerate} \PYG{o}{=} \PYG{n}{device\PYGZus{}info}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}default\PYGZus{}samplerate\PYGZsq{}}\PYG{p}{]}
+
+    \PYG{n}{length} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{args}\PYG{o}{.}\PYG{n}{window} \PYG{o}{*} \PYG{n}{args}\PYG{o}{.}\PYG{n}{samplerate} \PYG{o}{/} \PYG{p}{(}\PYG{l+m+mi}{1000} \PYG{o}{*} \PYG{n}{args}\PYG{o}{.}\PYG{n}{downsample}\PYG{p}{))}
+    \PYG{n}{plotdata} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n}{length}\PYG{p}{,} \PYG{n}{nchan}\PYG{p}{))}
+
+    \PYG{n}{fig}\PYG{p}{,} \PYG{n}{axarr} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplots}\PYG{p}{(}\PYG{n}{nchan}\PYG{p}{,} \PYG{n}{sharex}\PYG{o}{=}\PYG{n+nb+bp}{True}\PYG{p}{)}
+    \PYG{n}{lines} \PYG{o}{=} \PYG{p}{[}\PYG{n}{axarr}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{plotdata}\PYG{p}{[:,} \PYG{n}{n}\PYG{p}{])[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{nchan}\PYG{p}{)]}
+    \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{args}\PYG{o}{.}\PYG{n}{channels}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{nchan}\PYG{p}{):}
+            \PYG{n}{axarr}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{o}{.}\PYG{n}{legend}\PYG{p}{((}\PYG{l+s+s1}{\PYGZsq{}channel \PYGZob{}\PYGZcb{}\PYGZsq{}}\PYG{o}{.}\PYG{n}{format}\PYG{p}{(}\PYG{n}{args}\PYG{o}{.}\PYG{n}{channels}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]),} \PYG{p}{),}
+                            \PYG{n}{loc}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}lower left\PYGZsq{}}\PYG{p}{)}
+            \PYG{n}{axarr}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{o}{.}\PYG{n}{axis}\PYG{p}{((}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{plotdata}\PYG{p}{),} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{1.2}\PYG{p}{,} \PYG{l+m+mf}{1.2}\PYG{p}{))}
+            \PYG{n}{axarr}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{o}{.}\PYG{n}{yaxis}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n+nb+bp}{True}\PYG{p}{)}
+            \PYG{c+c1}{\PYGZsh{} ax.tick\PYGZus{}params(bottom=\PYGZsq{}off\PYGZsq{}, top=\PYGZsq{}off\PYGZsq{}, labelbottom=\PYGZsq{}off\PYGZsq{},}
+                            \PYG{c+c1}{\PYGZsh{} right=\PYGZsq{}off\PYGZsq{}, left=\PYGZsq{}on\PYGZsq{}, labelleft=\PYGZsq{}on\PYGZsq{},}
+                            \PYG{c+c1}{\PYGZsh{} direction=\PYGZsq{}out\PYGZsq{}, length=6, width=2, colors=\PYGZsq{}r\PYGZsq{})}
+    \PYG{n}{fig}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{n}{pad}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)}
+
+    \PYG{n}{stream} \PYG{o}{=} \PYG{n}{sd}\PYG{o}{.}\PYG{n}{InputStream}\PYG{p}{(}
+        \PYG{n}{device}\PYG{o}{=}\PYG{n}{args}\PYG{o}{.}\PYG{n}{device}\PYG{p}{,} \PYG{n}{channels}\PYG{o}{=}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{args}\PYG{o}{.}\PYG{n}{channels}\PYG{p}{),}
+        \PYG{n}{samplerate}\PYG{o}{=}\PYG{n}{args}\PYG{o}{.}\PYG{n}{samplerate}\PYG{p}{,} \PYG{n}{callback}\PYG{o}{=}\PYG{n}{audio\PYGZus{}callback}\PYG{p}{)}
+    \PYG{n}{fig}\PYG{o}{.}\PYG{n}{canvas}\PYG{o}{.}\PYG{n}{mpl\PYGZus{}connect}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}key\PYGZus{}press\PYGZus{}event\PYGZsq{}}\PYG{p}{,} \PYG{n}{onKeyboard}\PYG{p}{)}
+    \PYG{n}{ani} \PYG{o}{=} \PYG{n}{FuncAnimation}\PYG{p}{(}\PYG{n}{fig}\PYG{p}{,} \PYG{n}{update\PYGZus{}plot}\PYG{p}{,} \PYG{n}{interval}\PYG{o}{=}\PYG{n}{args}\PYG{o}{.}\PYG{n}{interval}\PYG{p}{,} \PYG{n}{blit}\PYG{o}{=}\PYG{n+nb+bp}{True}\PYG{p}{)}
+    \PYG{k}{with} \PYG{n}{stream}\PYG{p}{:}
+        \PYG{k}{print}\PYG{p}{(}\PYG{n}{options}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{()}
+        \PYG{k}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Bye\PYGZsq{}}\PYG{p}{)}
+\PYG{k}{except} \PYG{n+ne}{Exception} \PYG{k}{as} \PYG{n}{e}\PYG{p}{:}
+    \PYG{n}{parser}\PYG{o}{.}\PYG{n}{exit}\PYG{p}{(}\PYG{n+nb}{type}\PYG{p}{(}\PYG{n}{e}\PYG{p}{)}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{+} \PYG{l+s+s1}{\PYGZsq{}: \PYGZsq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{e}\PYG{p}{))}
+\end{Verbatim}

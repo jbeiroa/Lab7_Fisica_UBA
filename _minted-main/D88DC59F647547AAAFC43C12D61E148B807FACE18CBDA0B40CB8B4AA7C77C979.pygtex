@@ -1,0 +1,50 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} coding: utf\PYGZhy{}8}
+
+
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k+kn}{as} \PYG{n+nn}{np}
+
+
+\PYG{k}{def} \PYG{n+nf}{extractIR}\PYG{p}{(}\PYG{n}{sweep\PYGZus{}response}\PYG{p}{,} \PYG{n}{invsweepfft}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Extract impulse response from swept\PYGZhy{}sine recording.}
+\PYG{l+s+sd}{    }
+\PYG{l+s+sd}{    Returns:}
+\PYG{l+s+sd}{            irLin : numpy array with linear impulse response}
+\PYG{l+s+sd}{            irNonLin : non linear Volterra diagonals}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{N} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{invsweepfft}\PYG{p}{)}
+    \PYG{n}{sweepfft} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{fft}\PYG{o}{.}\PYG{n}{fft}\PYG{p}{(}\PYG{n}{sweep\PYGZus{}response}\PYG{p}{,} \PYG{n}{N}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} perform convolution with inverse filter}
+    \PYG{n}{invsweepfft} \PYG{o}{=} \PYG{n}{invsweepfft}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{sweepfft}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n}{ir} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{fft}\PYG{o}{.}\PYG{n}{ifft}\PYG{p}{(}\PYG{n}{invsweepfft} \PYG{o}{*} \PYG{n}{sweepfft}\PYG{p}{)}
+    \PYG{n}{ir} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{roll}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{ir}\PYG{o}{.}\PYG{n}{real}\PYG{p}{),} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{ir}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} separate linear and non linear responses}
+    \PYG{n}{irLin} \PYG{o}{=} \PYG{n}{ir}\PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{ir}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{):]}
+    \PYG{n}{irNonLin} \PYG{o}{=} \PYG{n}{ir}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{ir}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)]}
+    \PYG{k}{return} \PYG{n}{irLin}\PYG{p}{,} \PYG{n}{irNonLin}
+
+
+\PYG{k}{if} \PYG{n}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
+    \PYG{k+kn}{from} \PYG{n+nn}{matplotlib} \PYG{k+kn}{import} \PYG{n}{pyplot} \PYG{k}{as} \PYG{n}{plt}
+    \PYG{k+kn}{from} \PYG{n+nn}{sys} \PYG{k+kn}{import} \PYG{n}{argv}
+    \PYG{k+kn}{from} \PYG{n+nn}{scipy.io} \PYG{k+kn}{import} \PYG{n}{wavfile} \PYG{k}{as} \PYG{n}{wav}
+    \PYG{k+kn}{from} \PYG{n+nn}{scipy.io} \PYG{k+kn}{import} \PYG{n}{loadmat}
+    
+    
+    \PYG{n}{script}\PYG{p}{,} \PYG{n}{sweep}\PYG{p}{,} \PYG{n}{invsweep} \PYG{o}{=} \PYG{n}{argv}
+    \PYG{c+c1}{\PYGZsh{} retrieve data}
+    \PYG{n}{sw\PYGZus{}rate}\PYG{p}{,} \PYG{n}{sw} \PYG{o}{=} \PYG{n}{wav}\PYG{o}{.}\PYG{n}{read}\PYG{p}{(}\PYG{n}{sweep}\PYG{p}{)}
+    \PYG{n}{mat} \PYG{o}{=} \PYG{n}{loadmat}\PYG{p}{(}\PYG{n}{invsweep}\PYG{p}{)}
+    \PYG{n}{invsw} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{mat}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}invsw700to5j20s\PYGZsq{}}\PYG{p}{])}
+    
+    \PYG{n}{irLin}\PYG{p}{,} \PYG{n}{irNonLin} \PYG{o}{=} \PYG{n}{extractIR}\PYG{p}{(}\PYG{n}{sw}\PYG{p}{,} \PYG{n}{invsw}\PYG{p}{)}
+    
+    \PYG{n}{NFFT} \PYG{o}{=} \PYG{l+m+mi}{1024}
+    \PYG{n}{Fs} \PYG{o}{=} \PYG{l+m+mi}{48000}
+    \PYG{n}{noverlap} \PYG{o}{=} \PYG{l+m+mi}{900}
+    
+    \PYG{n}{Pxx}\PYG{p}{,} \PYG{n}{freqs}\PYG{p}{,} \PYG{n}{bins}\PYG{p}{,} \PYG{n}{im} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{specgram}\PYG{p}{(}\PYG{n}{irLin}\PYG{p}{,} \PYG{n}{NFFT}\PYG{o}{=}\PYG{n}{NFFT}\PYG{p}{,} \PYG{n}{Fs}\PYG{o}{=}\PYG{n}{Fs}\PYG{p}{,} \PYG{n}{noverlap}\PYG{o}{=}\PYG{l+m+mi}{900}\PYG{p}{,}
+                                \PYG{n}{cmap}\PYG{o}{=}\PYG{n}{plt}\PYG{o}{.}\PYG{n}{get\PYGZus{}cmap}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}seismic\PYGZsq{}}\PYG{p}{))}
+    
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{()}
+\end{Verbatim}

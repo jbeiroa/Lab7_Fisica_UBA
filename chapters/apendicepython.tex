@@ -1,0 +1,15 @@
+\chapter{Programa de adquisición y control para estudios comportamentales}
+\label{ap:programapython}
+
+El programa está íntegramente escrito en Python 3.5 y utiliza las librerías Sound Device y PyAudio para grabar y emitir sonidos respectivamente. Cabe aclarar que se puede ``grabar'' cualquier señal analógica de frecuencia superior a 20Hz con una amplitud pico a pico de alrededor de 200mV a 1V. Al no ser datos requeridos por los consumidores, los fabricantes rara vez los listan en las hojas de datos. Por ese motivo, es recomendable aumentar el valor pico a pico de tensión de la señal a medir hasta observar que la PC satura (el efecto se lo llama \emph{clipping}) la señal.
+
+Este programa se utilizó para grabar en estéreo las señales del par de electrodos y la del hidrófono. La segunda sirve como una ``estampa temporal'', permite discernir en qué momento se emitió el estímulo.
+
+Para terminar, utilizando distintas teclas del teclado uno puede abrir archivos de texto en los cuales se guardarán las mediciones y emitir sonidos desde un archivo (un .wav) o tonos puros de frecuencia, amplitud y duración programada por el usuario en el momento.
+
+\section{Programa principal}
+\lstinputlisting[language=Python]{chapters/code/experiment.py}
+\section{Reproductor de sonidos}
+\lstinputlisting[language=Python]{chapters/code/ToneGenerator.py}
+\section{Controlador Arduino}
+\lstinputlisting[language=Python]{chapters/code/arduino.py}
